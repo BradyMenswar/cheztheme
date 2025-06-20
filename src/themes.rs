@@ -35,7 +35,7 @@ impl ThemeType {
     }
 }
 
-pub fn list() -> Result<()> {
+pub fn list(color: bool) -> Result<()> {
     let mut file_stems = Vec::new();
 
     for file in PRESETS.files() {
@@ -60,17 +60,31 @@ pub fn list() -> Result<()> {
             }
         }
     }
-
+    let current_theme = get_current_theme().unwrap();
     file_stems.sort();
     for stem in file_stems.iter() {
         match stem {
             ThemeType::Preset(name) => {
-                println!("{} ", name.purple());
-                print_palette(name)?;
+                if name == &current_theme {
+                    println!("{}", ("** ".to_string() + name).yellow())
+                }
+                else {
+                    println!("{}", name.purple())
+                }
+                if color {
+                    print_palette(name)?;
+                }
             }
             ThemeType::Custom(name) => {
-                println!("{} ", name);
-                print_palette(name)?;
+                if name == &current_theme {
+                    println!("{}", ("** ".to_string() + name).yellow())
+                }
+                else {
+                    println!("{}", name)
+                }
+                if color {
+                    print_palette(name)?;
+                }
             }
         }
     }
@@ -91,7 +105,14 @@ pub fn load(name: &str) -> Result<String> {
 }
 
 pub fn current() -> Result<()> {
-    let color_block = "   ";
+    if let Ok(current_theme) = get_current_theme() {
+        println!("{}", current_theme);
+        print_palette(current_theme.as_str())?;
+    }
+    Ok(())
+}
+
+pub fn get_current_theme() -> Result<String> {
     if let Ok(src) = env::var("HOME") {
         let config_location = PathBuf::from(src).join(".config/chezmoi/chezmoi.toml");
         let toml_str =
@@ -99,29 +120,11 @@ pub fn current() -> Result<()> {
         let toml_config = toml_str
             .parse::<DocumentMut>()
             .context("Failed to parse TOML")?;
-        let current_theme = &toml_config["data"]["cheztheme"]["themeName"];
-        println!("Current theme:{}", current_theme);
-        println!(
-            "{}{}{}{}{}{}{}{}\n{}{}{}{}{}{}{}{}\n",
-            color_block.on_black(),
-            color_block.on_red(),
-            color_block.on_green(),
-            color_block.on_yellow(),
-            color_block.on_blue(),
-            color_block.on_magenta(),
-            color_block.on_cyan(),
-            color_block.on_white(),
-            color_block.on_bright_black(),
-            color_block.on_bright_red(),
-            color_block.on_bright_green(),
-            color_block.on_bright_yellow(),
-            color_block.on_bright_blue(),
-            color_block.on_bright_magenta(),
-            color_block.on_bright_cyan(),
-            color_block.on_bright_white(),
-        );
+        let current_theme_item = &toml_config["data"]["cheztheme"]["themeName"];
+        let current_theme = current_theme_item.as_str().unwrap();
+        return Ok(current_theme.to_string());
     }
-    Ok(())
+    Ok("".to_string())
 }
 
 #[allow(non_snake_case)]

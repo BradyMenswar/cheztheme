@@ -1,5 +1,5 @@
-mod themes;
 mod apply;
+mod themes;
 
 use clap::{Parser, Subcommand, command};
 
@@ -12,17 +12,22 @@ struct Cli {
 
 #[derive(Subcommand, Debug, Clone)]
 enum Commands {
-    List,
+    List {
+        #[clap(short, long)]
+        color: bool,
+    },
     Current,
-    Apply { name: String },
+    Apply {
+        name: String,
+    },
 }
 
 fn main() {
     let cli = Cli::parse();
 
     match &cli.command {
-        Commands::List => {
-            let _ = themes::list();
+        Commands::List { color } => {
+            let _ = themes::list(*color);
         }
         Commands::Current => {
             let _ = themes::current();
@@ -31,5 +36,4 @@ fn main() {
             let _ = apply::run(name);
         }
     }
-
 }
