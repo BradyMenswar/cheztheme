@@ -1,3 +1,4 @@
+use anyhow::{Context, Result};
 use std::{env, fs, path::PathBuf, process::Command};
 
 use serde::Deserialize;
@@ -6,39 +7,41 @@ use toml_edit::{DocumentMut, value};
 use crate::themes::load;
 
 #[derive(Deserialize, Debug)]
-struct Theme {
-    palette: Palette,
+pub struct Theme {
+    pub palette: Palette,
 }
 
 #[derive(Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct Palette {
-    base00: String,
-    base01: String,
-    base02: String,
-    base03: String,
-    base04: String,
-    base05: String,
-    base06: String,
-    base07: String,
-    base08: String,
-    base09: String,
-    base0A: String,
-    base0B: String,
-    base0C: String,
-    base0D: String,
-    base0E: String,
-    base0F: String,
+pub struct Palette {
+    pub base00: String,
+    pub base01: String,
+    pub base02: String,
+    pub base03: String,
+    pub base04: String,
+    pub base05: String,
+    pub base06: String,
+    pub base07: String,
+    pub base08: String,
+    pub base09: String,
+    pub base0A: String,
+    pub base0B: String,
+    pub base0C: String,
+    pub base0D: String,
+    pub base0E: String,
+    pub base0F: String,
 }
 
-pub fn run(name: &str) -> Result<(), Box<dyn std::error::Error>> {
+pub fn run(name: &str) -> Result<()> {
     if let Ok(theme_contents) = load(name) {
         let theme: Theme = serde_yaml::from_str(theme_contents.as_str())?;
 
         if let Ok(src) = env::var("HOME") {
             let config_location = PathBuf::from(src).join(".config/chezmoi/chezmoi.toml");
-            let toml_str = fs::read_to_string(config_location.clone())?;
-            let mut toml_config = toml_str.parse::<DocumentMut>()?;
+            let toml_str = fs::read_to_string(config_location.clone()).context("Chezmoi config file not found")?;
+            let mut toml_config = toml_str
+                .parse::<DocumentMut>()
+                .context("Failed to parse TOML")?;
 
             toml_config["data"]["cheztheme"]["themeName"] = value(name);
             toml_config["data"]["cheztheme"]["base00"] = value(theme.palette.base00);
@@ -58,20 +61,21 @@ pub fn run(name: &str) -> Result<(), Box<dyn std::error::Error>> {
             toml_config["data"]["cheztheme"]["base0E"] = value(theme.palette.base0E);
             toml_config["data"]["cheztheme"]["base0F"] = value(theme.palette.base0F);
 
-            fs::write(config_location, toml_config.to_string())?
+            fs::write(config_location, toml_config.to_string())
+                .context("Failed to write toml config")?
         }
 
         Command::new("chezmoi")
             .arg("apply")
             .output()
-            .expect("Chezmoi failed to apply.");
+            .context("Chezmoi failed to apply.")?;
 
         // --- Kitty Reload ---- //
         let kitty_pid_output = Command::new("pgrep")
             .arg("-a")
             .arg("kitty")
             .output()
-            .expect("Pid of kitty not found");
+            .context("Pid of kitty not found")?;
         let kitty_stdout = String::from_utf8(kitty_pid_output.stdout)?;
         for line in kitty_stdout.lines() {
             let kitty_pid = line.trim();
@@ -83,7 +87,7 @@ pub fn run(name: &str) -> Result<(), Box<dyn std::error::Error>> {
                 .arg("-SIGUSR1")
                 .arg(kitty_pid.trim())
                 .output()
-                .expect("Kitty failed to reload");
+                .context("Kitty failed to reload")?;
         }
         // ------------------- //
 
