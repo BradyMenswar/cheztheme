@@ -1,0 +1,11 @@
+[package]
+name = "cheztheme_core"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.98"
+include_dir = "0.7.4"
+serde = { version = "1.0.219", features = ["derive"] }
+serde_yaml = "0.9.34"
+toml_edit = "0.22.27"
