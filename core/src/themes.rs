@@ -1,5 +1,5 @@
 use anyhow::{Context, Result, bail};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::{cmp::Ordering, env, fs, path::PathBuf, process::Command};
 
 use crate::config;
@@ -114,7 +114,7 @@ pub struct Theme {
     pub palette: Palette,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[allow(non_snake_case)]
 pub struct Palette {
     pub base00: String,

@@ -13,9 +13,12 @@
     "windows": [
       {
         "title": "cheztheme",
-        "width": 800,
+        "width": 335,
         "height": 600,
-        "decorations": false
+        "decorations": false,
+        "visible": false,
+        "skipTaskbar": true,
+        "resizable": false
       }
     ],
     "security": {
