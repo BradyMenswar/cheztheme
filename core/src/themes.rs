@@ -86,26 +86,6 @@ pub fn apply_theme(theme_name: &str, theme: Theme) -> Result<()> {
 
     Command::new("chezmoi").arg("apply").output()?;
 
-    // To extract to bash file loaded in config
-    let kitty_pid_output = Command::new("pgrep")
-        .arg("-a")
-        .arg("kitty")
-        .output()
-        .context("Pid of kitty not found")?;
-    let kitty_stdout = String::from_utf8(kitty_pid_output.stdout)?;
-    for line in kitty_stdout.lines() {
-        let kitty_pid = line.trim();
-        if kitty_pid.is_empty() {
-            continue;
-        }
-
-        Command::new("kill")
-            .arg("-SIGUSR1")
-            .arg(kitty_pid.trim())
-            .output()
-            .context("Kitty failed to reload")?;
-    }
-
     Ok(())
 }
 
